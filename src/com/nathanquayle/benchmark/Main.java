@@ -22,6 +22,7 @@ public class Main {
 
             System.out.println("Testing size: " + i);
 
+            // add test methods here
             lastIndexTest(testArr);
             reverseTest(testArr);
             shuffleTest(testArr);
