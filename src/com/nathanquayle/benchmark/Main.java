@@ -11,73 +11,37 @@ public class Main {
         // setup
         int arraySize = 100_000;
 
-        List<Integer> Arr = new ArrayList<>();
+        List<Integer> testArr = new ArrayList<>();
 
+        // Populate with random numbers
         for (int i = 0; i < arraySize; i++) {
-            Arr.add(i);
+            testArr.add((int) (Math.random() * 100) );
         }
 
         for (int i = 10; i <= arraySize; i *= 10) {
-            List<Integer> testArr = Arr.subList(0, i - 1);
+            List<Integer> t = testArr.subList(0, i);
+            Collections.shuffle(t);
 
-            System.out.println("Testing size: " + i);
+            System.out.println("Running " + i + " array size tests");
 
-            // add test methods here
-            lastIndexTest(testArr);
-            reverseTest(testArr);
-            shuffleTest(testArr);
-            sortTest(testArr);
+            // Add tests here
+            test( "last index", () -> t.get(t.size() - 1));
+            test( "reverse", () -> Collections.reverse(t));
+            test( "shuffle", () -> Collections.shuffle(t));
+            test( "sort", () -> Collections.sort(t));
         }
 
     }
 
-    private static void lastIndexTest(List<Integer> arr) {
-        Collections.shuffle(arr);
-
+    private static void test(String testName, Runnable method) {
         long start = System.nanoTime();
 
-        arr.get(arr.size() - 1);
+        method.run();
 
         long finish = System.nanoTime();
         long totalTime = finish - start;
 
-        System.out.println("Last index test took: " + totalTime + "ns | " +  format((double) totalTime / 1000000)+ "ms");
-    }
-
-
-    private static void reverseTest(List<Integer> arr) {
-        Collections.shuffle(arr);
-
-        long start = System.nanoTime();
-
-        Collections.reverse(arr);
-
-        long finish = System.nanoTime();
-        long totalTime = finish - start;
-
-        System.out.println("Reverse test took: " + totalTime + "ns | " +  format((double) totalTime / 1000000) + "ms");
-    }
-
-    private static void shuffleTest(List<Integer> arr) {
-        long start = System.nanoTime();
-
-        Collections.shuffle(arr);
-
-        long finish = System.nanoTime();
-        long totalTime = finish - start;
-
-        System.out.println("Shuffle test took: " + totalTime + "ns | " +  format((double) totalTime / 1000000) + "ms");
-    }
-
-    private static void sortTest(List<Integer> arr) {
-        long start = System.nanoTime();
-
-        Collections.sort(arr);
-
-        long finish = System.nanoTime();
-        long totalTime = finish - start;
-
-        System.out.println("Sort test took: " + totalTime + "ns | " + format((double) totalTime / 1000000) + "ms");
+        System.out.println(testName + " test took: " + totalTime + "ns | " +  format((double) totalTime / 1000000)+ "ms");
     }
 
     private static String format(double value) {
