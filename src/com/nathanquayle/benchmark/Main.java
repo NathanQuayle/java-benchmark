@@ -14,42 +14,53 @@ public class Main {
     private static int STEP_SIZE;
 
     public static void main(String[] args) {
-        // setup
-        ARRAY_SIZE = 10_000;
-        STEP_SIZE = 10_000;
-        NUM_OF_LOOPS = 100;
-
+        List<Integer> testArr = new ArrayList<>();
         if (!isWarmedUp) {
-            for (int i = 1; i <= 10_000; i++) {
+            // Warmup setup
+            ARRAY_SIZE = 100;
+            STEP_SIZE = 50;
+            NUM_OF_LOOPS = 1;
+            testArr = setupTestArr();
+            // 15,000 looks like the 'sweet spot' first test time isn't skewed.
+            for (int i = 1; i <= 15_000; i++) {
                 System.out.println("Warming up.. " + i + "/10000");
-                runTests(Arrays.asList(1,2,3,4,5));
+                runTests(testArr);
             }
             isWarmedUp = true;
+
+            // Test setup
+            ARRAY_SIZE = 10_000;
+            STEP_SIZE = 5_000;
+            NUM_OF_LOOPS = 100;
+            testArr = setupTestArr();
         }
-        setupTests();
+
+        Instant startTime = Instant.now();
+
+        runTests(testArr);
+
+        displayTimeTaken(startTime);
         displayResults();
     }
 
-    private static void setupTests() {
+    private static List<Integer> setupTestArr() {
         List<Integer> testArr = new ArrayList<>();
 
         // Populate with random numbers
         for (int i = 0; i < ARRAY_SIZE; i++) {
             testArr.add((int) (Math.random() * 100) );
         }
-        Instant startTime = Instant.now();
-
-        runTests(testArr);
-
-        displayTimeTaken(startTime);
+        return testArr;
     }
 
     private static void runTests(List<Integer> testArr) {
         for (int i = STEP_SIZE; i <= testArr.size(); i += STEP_SIZE) {
             List<Integer> testArrSub = testArr.subList(0, i);
 
-            addTestTime("array size", testArrSub.size());
-            System.out.println("Running " + i + " array size tests");
+            if(isWarmedUp) {
+                addTestTime(testArrSub.size());
+                System.out.println("Running " + i + " array size tests");
+            }
 
             // Add tests here
 //            test(testArrSub,"Last Index", () -> testArrSub.get(testArrSub.size() - 1));
@@ -94,7 +105,8 @@ public class Main {
         results.get(key).add(value);
     }
 
-    private static void addTestTime(String key, int value) {
+    private static void addTestTime(int value) {
+        String key = "Array Size";
         testTimes.putIfAbsent(key, new ArrayList<>());
         // Add value as ms.
         testTimes.get(key).add(value);
@@ -114,7 +126,7 @@ public class Main {
         });
     }
 
-    public static void displayTimeTaken(Instant start) {
+    private static void displayTimeTaken(Instant start) {
         Duration d =  Duration.between(start, Instant.now());
         System.out.println();
         System.out.println("Tests ran in: " + d.toMinutesPart() + " minutes and " + d.toSecondsPart() + " seconds.");
