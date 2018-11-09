@@ -1,53 +1,130 @@
 package com.nathanquayle.benchmark;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 
 public class Main {
+    private static HashMap<String, ArrayList<String>> results = new HashMap<>();
+    private static HashMap<String, ArrayList<Integer>> testTimes = new HashMap<>();
+    private static boolean isWarmedUp = false;
+    private static int ARRAY_SIZE;
+    private static int NUM_OF_LOOPS;
+    private static int STEP_SIZE;
 
     public static void main(String[] args) {
         // setup
-        int arraySize = 100_000;
+        ARRAY_SIZE = 10_000;
+        STEP_SIZE = 10_000;
+        NUM_OF_LOOPS = 100;
 
+        if (!isWarmedUp) {
+            for (int i = 1; i <= 10_000; i++) {
+                System.out.println("Warming up.. " + i + "/10000");
+                runTests(Arrays.asList(1,2,3,4,5));
+            }
+            isWarmedUp = true;
+        }
+        setupTests();
+        displayResults();
+    }
+
+    private static void setupTests() {
         List<Integer> testArr = new ArrayList<>();
 
         // Populate with random numbers
-        for (int i = 0; i < arraySize; i++) {
+        for (int i = 0; i < ARRAY_SIZE; i++) {
             testArr.add((int) (Math.random() * 100) );
         }
+        Instant startTime = Instant.now();
 
-        for (int i = 10; i <= arraySize; i *= 10) {
-            List<Integer> t = testArr.subList(0, i);
-            Collections.shuffle(t);
+        runTests(testArr);
 
+        displayTimeTaken(startTime);
+    }
+
+    private static void runTests(List<Integer> testArr) {
+        for (int i = STEP_SIZE; i <= testArr.size(); i += STEP_SIZE) {
+            List<Integer> testArrSub = testArr.subList(0, i);
+
+            addTestTime("array size", testArrSub.size());
             System.out.println("Running " + i + " array size tests");
 
             // Add tests here
-            test( "last index", () -> t.get(t.size() - 1));
-            test( "reverse", () -> Collections.reverse(t));
-            test( "shuffle", () -> Collections.shuffle(t));
-            test( "sort", () -> Collections.sort(t));
+//            test(testArrSub,"Last Index", () -> testArrSub.get(testArrSub.size() - 1));
+//            test(testArrSub,"Reverse", () -> Collections.reverse(testArrSub));
+//            test(testArrSub,"Shuffle", () -> Collections.shuffle(testArrSub));
+            test(testArrSub,"Sort", () -> Collections.sort(testArrSub));
+            test(testArrSub,"My Sort", () -> Utils.quickSort(testArrSub));
+//            test(testArrSub,"My Shuffle", () -> Utils.shuffle(testArrSub));
+//            test(testArrSub,"My Reverse", () -> Utils.reverse(testArrSub));
         }
-
     }
 
-    private static void test(String testName, Runnable method) {
-        long start = System.nanoTime();
+    private static void test(List<Integer> testArr, String testName, Runnable method) {
+        List<Long> times = new ArrayList<>();
 
-        method.run();
+        for (int i = 0; i < NUM_OF_LOOPS ; i++) {
+            Collections.shuffle(testArr);
+            long start = System.nanoTime();
+            method.run();
 
-        long finish = System.nanoTime();
-        long totalTime = finish - start;
+            long finish = System.nanoTime();
+            long totalTime = finish - start;
+            times.add(totalTime);
+        }
 
-        System.out.println(testName + " test took: " + totalTime + "ns | " +  format((double) totalTime / 1000000)+ "ms");
+        if(isWarmedUp) {
+            addResults(testName, calculateAverage(times));
+       }
+    }
+
+    private static String calculateAverage(List<Long> arr) {
+        long sum = 0;
+        for (long time : arr) {
+            sum += time;
+        }
+        return format((double) (sum / arr.size()) / 1000000);
+    }
+
+    private static void addResults(String key, String value) {
+        results.putIfAbsent(key, new ArrayList<>());
+        // Add value as ms.
+        results.get(key).add(value);
+    }
+
+    private static void addTestTime(String key, int value) {
+        testTimes.putIfAbsent(key, new ArrayList<>());
+        // Add value as ms.
+        testTimes.get(key).add(value);
+    }
+
+    private static void displayResults() {
+        testTimes.forEach((k, v) -> {
+            System.out.print(k + ",");
+            v.forEach((res) -> System.out.print(res + ","));
+            System.out.println();
+        });
+
+        results.forEach((k, v) -> {
+            System.out.print(k + ",");
+            v.forEach((res) -> System.out.print(res + ","));
+            System.out.println();
+        });
+    }
+
+    public static void displayTimeTaken(Instant start) {
+        Duration d =  Duration.between(start, Instant.now());
+        System.out.println();
+        System.out.println("Tests ran in: " + d.toMinutesPart() + " minutes and " + d.toSecondsPart() + " seconds.");
     }
 
     private static String format(double value) {
         DecimalFormat df = new DecimalFormat("#");
-        df.setMaximumFractionDigits(8);
+        df.setMaximumFractionDigits(2);
         df.setMinimumIntegerDigits(1);
         return df.format(value);
     }
+
 }
